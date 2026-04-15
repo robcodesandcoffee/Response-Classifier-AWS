@@ -17,40 +17,45 @@ for f in /etc/profile.d/*.sh; do
     [ -r "$f" ] && . "$f" || true
 done
 
-# ── Diagnostics — print what's available before doing any work ────────────────
-echo "▶ Tool availability check:"
-command -v python    &>/dev/null && echo "  python    : $(python --version)"          || echo "  python    : NOT FOUND"
+# ── Diagnostics ───────────────────────────────────────────────────────────────
+echo "▶ Tool check:"
+command -v python    &>/dev/null && echo "  python    : $(python --version)"            || echo "  python    : NOT FOUND"
 command -v terraform &>/dev/null && echo "  terraform : $(terraform version | head -1)" || echo "  terraform : NOT FOUND"
-command -v aws       &>/dev/null && echo "  aws-cli   : $(aws --version 2>&1)"        || echo "  aws-cli   : NOT FOUND"
+command -v aws       &>/dev/null && echo "  aws-cli   : $(aws --version 2>&1)"          || echo "  aws-cli   : NOT FOUND"
 echo ""
 
-# ── 1. System package: libgomp1 (required by XGBoost / LightGBM) ─────────────
-echo "▶ Installing libgomp1..."
+# ── System dependency ─────────────────────────────────────────────────────────
+echo "▶ Installing libgomp1 (required by XGBoost / LightGBM)..."
 sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends libgomp1
 sudo rm -rf /var/lib/apt/lists/*
-echo "  ✓ libgomp1 installed"
 echo ""
 
-# ── 2. Python virtual environment ─────────────────────────────────────────────
-echo "▶ Upgrading pip..."
+# ── Python packages ───────────────────────────────────────────────────────────
+# Installed directly into the container — no venv needed, Docker is the isolation layer
+echo "▶ Installing Python packages..."
 python -m pip install --quiet --upgrade pip setuptools wheel
 
-echo "▶ Installing Python dependencies..."
-python -m pip install --quiet -r "${WORKSPACE_DIR}/requirements.txt"
-
-echo "▶ Installing dev tools (flake8, black, ipykernel)..."
-python -m pip install --quiet flake8 black ipykernel
-
-echo "▶ Registering Jupyter kernel..."
-python -m ipykernel install --user \
-    --name=response-classifier \
-    --display-name "Response Classifier (Python 3.12)"
+python -m pip install --quiet \
+    `# AWS & SageMaker` \
+    sagemaker boto3 botocore \
+    `# Data science` \
+    pandas numpy scikit-learn xgboost lightgbm shap \
+    `# Visualisation` \
+    matplotlib seaborn plotly \
+    `# MLOps` \
+    mlflow \
+    `# AWS CDK (Python)` \
+    aws-cdk-lib constructs \
+    `# Utilities` \
+    python-dotenv pyyaml requests tqdm \
+    `# Dev tools` \
+    flake8 black
 
 echo "  ✓ Python packages installed"
 echo ""
 
-# ── 4. AWS credentials check (non-fatal) ─────────────────────────────────────
+# ── AWS credentials check ─────────────────────────────────────────────────────
 if command -v aws &>/dev/null && aws sts get-caller-identity &>/dev/null; then
     echo "  ✓ AWS credentials detected"
     aws sts get-caller-identity --query '{Account:Account,Arn:Arn}' --output table
@@ -59,33 +64,26 @@ else
 fi
 echo ""
 
-# ── 5. Git config reminder (non-fatal) ───────────────────────────────────────
+# ── Git config reminder ───────────────────────────────────────────────────────
 if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
     echo "  ⚠ Git email not set:"
     echo "    git config --global user.email 'you@example.com'"
-    echo "    git config --global user.name 'Your Name'"
+    echo "    git config --global user.name  'Your Name'"
     echo ""
 fi
 
-# ── 6. Shell aliases ──────────────────────────────────────────────────────────
-ALIASES_FILE="${HOME}/.bash_aliases"
-cat >> "$ALIASES_FILE" << EOF
+# ── Shell aliases ─────────────────────────────────────────────────────────────
+cat >> "${HOME}/.bash_aliases" << EOF
 
 # Response Classifier AWS
 alias tf="terraform"
 alias tfplan="make tf-plan ENV=dev"
 alias tfapply="make tf-apply ENV=dev"
-alias cdkdeploy="make cdk-deploy ENV=dev"
-alias cdksynth="make cdk-synth ENV=dev"
-alias lab="jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --notebook-dir=${WORKSPACE_DIR}/notebooks"
 EOF
-echo "▶ Shell aliases written to ${ALIASES_FILE}"
-echo ""
 
 echo "════════════════════════════════════════════════════════"
-echo "  Setup complete!"
-echo "  • Type 'activate' to activate the Python venv"
-echo "  • Type 'lab' to start Jupyter Lab on port 8888"
-echo "  • Type 'tfplan' to run terraform plan for dev"
+echo "  Ready! Useful commands:"
+echo "  tfplan   — terraform plan for dev"
+echo "  tfapply  — terraform apply for dev"
 echo "════════════════════════════════════════════════════════"
 echo ""

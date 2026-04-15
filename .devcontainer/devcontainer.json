@@ -71,10 +71,10 @@
   },
   // Mount local AWS credentials into the container
   "mounts": [
-    "source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.aws,target=/home/vscode/.aws,type=bind,consistency=cached"
   ],
   // Environment variables available in every terminal session
   "remoteEnv": {
-    "AWS_DEFAULT_REGION": "us-east-1"
+    "AWS_DEFAULT_REGION": "eu-west-2"
   }
 }

@@ -1,0 +1,102 @@
+{
+  "name": "Response Classifier AWS",
+  // Use the official Python 3.12 devcontainer image directly —
+  // no custom Dockerfile needed. Tools are installed via features below.
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  // Devcontainer features — the recommended way to layer tools onto a base image.
+  // Each feature is a self-contained install script maintained by Microsoft/HashiCorp.
+  "features": {
+    // Terraform 1.8
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "1.8.5"
+    },
+    // AWS CLI v2
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    }
+  },
+  // Forward Jupyter Lab port
+  "forwardPorts": [
+    8888
+  ],
+  "portsAttributes": {
+    "8888": {
+      "label": "Jupyter Lab",
+      "onAutoForward": "notify"
+    }
+  },
+  // Runs on the HOST before the container starts — ensures ~/.aws exists
+  // so the bind mount below doesn't fail if you haven't run aws configure yet
+  "initializeCommand": "mkdir -p ${localEnv:HOME}/.aws",
+  // -i = interactive shell, forces .bashrc to load so nvm/node PATH is available
+  "postCreateCommand": "bash -i .devcontainer/post-create.sh",
+  // VS Code extensions installed automatically
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        // Jupyter
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        // Terraform
+        "hashicorp.terraform",
+        // AWS
+        "amazonwebservices.aws-toolkit-vscode",
+        // Git & GitHub
+        "github.vscode-pull-request-github",
+        "eamodio.gitlens",
+        // Utilities
+        "ms-vscode.makefile-tools",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        // System Python — no venv needed, the container is the isolation layer
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": true,
+        // Linting & formatting
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true
+        },
+        "flake8.args": [
+          "--max-line-length=120"
+        ],
+        // Jupyter
+        "jupyter.notebookFileRoot": "${workspaceFolder}/notebooks",
+        "jupyter.kernels.filter": [
+          {
+            "path": "/usr/local/bin/python",
+            "type": "pythonEnvironment"
+          }
+        ],
+        // Terraform
+        "terraform.languageServer.enable": true,
+        "[terraform]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true
+        },
+        // Editor
+        "editor.rulers": [
+          120
+        ],
+        "files.trimTrailingWhitespace": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  // Mount local AWS credentials into the container
+  "mounts": [
+    "source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind,consistency=cached"
+  ],
+  // Environment variables available in every terminal session
+  "remoteEnv": {
+    "AWS_DEFAULT_REGION": "us-east-1"
+  }
+}

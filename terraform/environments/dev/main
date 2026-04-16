@@ -14,10 +14,10 @@ terraform {
 
   backend "s3" {
     # Populate these before first apply:
-    # bucket         = "<your-tfstate-bucket>"
-    # key            = "sagemaker-ml-platform/dev/terraform.tfstate"
-    # region         = "us-east-1"
-    # dynamodb_table = "<your-lock-table>"
+    # bucket         = "codesandcoffee-project-tfstate"
+    # key            = "response-classifier/dev/terraform.tfstate"
+    # region         = "eu-west-2"
+    # dynamodb_table = "tfstate-lock-table"
     # encrypt        = true
   }
 }

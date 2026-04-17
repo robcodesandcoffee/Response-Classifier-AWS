@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "ml-platform"
+  default = "response-classifier-ml"
 }
 
 variable "environment" {
@@ -15,7 +15,7 @@ variable "team" {
 
 variable "region" {
   type    = string
-  default = "us-east-1"
+  default = "eu-west-2"
 }
 
 variable "vpc_cidr" {
@@ -35,21 +35,5 @@ variable "private_subnet_cidrs" {
 
 variable "availability_zones" {
   type    = list(string)
-  default = ["us-east-1a", "us-east-1b"]
-}
-
-variable "studio_default_instance_type" {
-  type    = string
-  default = "ml.t3.medium"
-}
-
-variable "training_instance_type" {
-  type    = string
-  default = "ml.m5.xlarge"
-}
-
-# Leave empty to skip endpoint creation until a model has been trained
-variable "model_artifact_s3_uri" {
-  type    = string
-  default = ""
+  default = ["eu-west-2a", "eu-west-2b"]
 }

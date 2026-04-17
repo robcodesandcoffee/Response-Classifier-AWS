@@ -11,3 +11,17 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  #backend "s3" {
+  # Populate these before first apply:
+  # bucket         = "codesandcoffee-project-tfstate"
+  # key            = "response-classifier/dev/terraform.tfstate"
+  # region         = "eu-west-2"
+  # dynamodb_table = "tfstate-lock-table"
+  # encrypt        = true
+  #}
+}
+
+provider "aws" {
+  region = var.region
+}

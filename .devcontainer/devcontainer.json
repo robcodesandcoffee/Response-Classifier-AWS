@@ -13,6 +13,10 @@
     // AWS CLI v2
     "ghcr.io/devcontainers/features/aws-cli:1": {
       "version": "latest"
+    },
+    // Node.js LTS (required for AWS CDK CLI)
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
     }
   },
   // Runs on the HOST before the container starts — ensures ~/.aws exists
@@ -75,6 +79,7 @@
   ],
   // Environment variables available in every terminal session
   "remoteEnv": {
-    "AWS_DEFAULT_REGION": "eu-west-2"
+    "AWS_DEFAULT_REGION": "eu-west-2",
+    "AWS_PROFILE": "DevAccess"
   }
 }

@@ -1,0 +1,20 @@
+# ── Response Classifier AWS — persistent shell customisations ─────────────────
+# This file is sourced by .bashrc on container start.
+# Add aliases, env vars, and functions here — they survive rebuilds.
+
+# AWS shortcuts
+alias tf="terraform"
+alias tfplan="make tf-plan ENV=dev"
+alias tfapply="make tf-apply ENV=dev"
+alias tfoutput="make tf-output ENV=dev"
+
+# CDK shortcuts
+alias cdkdeploy="make cdk-deploy ENV=dev"
+alias cdkdiff="make cdk-diff ENV=dev"
+alias cdksynth="make cdk-synth ENV=dev"
+
+# Quick AWS identity check
+alias whoami-aws="aws sts get-caller-identity --profile DevAccess"
+
+# Default environment
+export ENV=dev

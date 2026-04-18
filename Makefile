@@ -6,7 +6,7 @@
 ENV         ?= dev
 TF_DIR      := terraform/environments/$(ENV)
 CDK_DIR     := cdk
-REGION      ?= us-east-1
+REGION      ?= eu-west-2
 
 .PHONY: help tf-init tf-plan tf-apply tf-destroy \
         cdk-bootstrap cdk-synth cdk-deploy cdk-destroy \

@@ -22,13 +22,7 @@ echo "▶ Tool check:"
 command -v python    &>/dev/null && echo "  python    : $(python --version)"            || echo "  python    : NOT FOUND"
 command -v terraform &>/dev/null && echo "  terraform : $(terraform version | head -1)" || echo "  terraform : NOT FOUND"
 command -v aws       &>/dev/null && echo "  aws-cli   : $(aws --version 2>&1)"          || echo "  aws-cli   : NOT FOUND"
-echo ""
-
-# ── System dependency ─────────────────────────────────────────────────────────
-echo "▶ Installing libgomp1 (required by XGBoost / LightGBM)..."
-sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends libgomp1
-sudo rm -rf /var/lib/apt/lists/*
+command -v cdk       &>/dev/null && echo "  cdk       : $(cdk --version)"               || echo "  cdk       : NOT FOUND"
 echo ""
 
 # ── Python packages ───────────────────────────────────────────────────────────
@@ -37,14 +31,8 @@ echo "▶ Installing Python packages..."
 python -m pip install --quiet --upgrade pip setuptools wheel
 
 python -m pip install --quiet \
-    `# AWS & SageMaker` \
+    `# AWS & SageMaker SDK` \
     sagemaker boto3 botocore \
-    `# Data science` \
-    pandas numpy scikit-learn xgboost lightgbm shap \
-    `# Visualisation` \
-    matplotlib seaborn plotly \
-    `# MLOps` \
-    mlflow \
     `# AWS CDK (Python)` \
     aws-cdk-lib constructs \
     `# Utilities` \
@@ -53,6 +41,12 @@ python -m pip install --quiet \
     flake8 black
 
 echo "  ✓ Python packages installed"
+echo ""
+
+# ── AWS CDK CLI ───────────────────────────────────────────────────────────────
+echo "▶ Installing AWS CDK CLI..."
+npm install -g aws-cdk --silent
+echo "  ✓ CDK $(cdk --version)"
 echo ""
 
 # ── AWS credentials check ─────────────────────────────────────────────────────
@@ -72,18 +66,23 @@ if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
     echo ""
 fi
 
-# ── Shell aliases ─────────────────────────────────────────────────────────────
-cat >> "${HOME}/.bash_aliases" << EOF
+# ── Shell profile (persists across rebuilds) ──────────────────────────────────
+PROFILE_SRC="${WORKSPACE_DIR}/.devcontainer/bash_profile"
+BASHRC="${HOME}/.bashrc"
 
-# Response Classifier AWS
-alias tf="terraform"
-alias tfplan="make tf-plan ENV=dev"
-alias tfapply="make tf-apply ENV=dev"
-EOF
+# Only add the source line once
+if ! grep -q "devcontainer/bash_profile" "${BASHRC}" 2>/dev/null; then
+    echo "" >> "${BASHRC}"
+    echo "# Response Classifier AWS — load project shell profile" >> "${BASHRC}"
+    echo "[ -f \"${PROFILE_SRC}\" ] && source \"${PROFILE_SRC}\"" >> "${BASHRC}"
+fi
+echo "  ✓ Shell profile loaded from .devcontainer/bash_profile"
 
 echo "════════════════════════════════════════════════════════"
 echo "  Ready! Useful commands:"
-echo "  tfplan   — terraform plan for dev"
-echo "  tfapply  — terraform apply for dev"
+echo "  tfplan      — terraform plan for dev"
+echo "  tfapply     — terraform apply for dev"
+echo "  cdkdeploy   — deploy CDK stacks to dev"
+echo "  whoami-aws  — check active AWS identity"
 echo "════════════════════════════════════════════════════════"
 echo ""

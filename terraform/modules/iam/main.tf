@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "sagemaker_assume" {
 }
 
 # ---------------------------------------------------------------------------
-# SageMaker Execution Role (Studio, training jobs, pipelines)
+# SageMaker Execution Role (Studio)
 # ---------------------------------------------------------------------------
 resource "aws_iam_role" "sagemaker_execution" {
   name               = "${var.project}-${var.environment}-sagemaker-exec-role"
@@ -64,75 +64,4 @@ resource "aws_iam_role_policy" "sagemaker_s3" {
       }
     ]
   })
-}
-
-resource "aws_iam_role_policy" "sagemaker_feature_store" {
-  name = "${var.project}-${var.environment}-feature-store-policy"
-  role = aws_iam_role.sagemaker_execution.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sagemaker:CreateFeatureGroup",
-          "sagemaker:DescribeFeatureGroup",
-          "sagemaker:DeleteFeatureGroup",
-          "sagemaker:UpdateFeatureGroup",
-          "sagemaker:ListFeatureGroups",
-          "sagemaker:PutRecord",
-          "sagemaker:GetRecord",
-          "sagemaker:DeleteRecord",
-          "sagemaker:BatchGetRecord"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["glue:*"]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "sagemaker_ecr" {
-  name = "${var.project}-${var.environment}-ecr-policy"
-  role = aws_iam_role.sagemaker_execution.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# ---------------------------------------------------------------------------
-# Pipeline execution role (can be separate for least-privilege)
-# ---------------------------------------------------------------------------
-resource "aws_iam_role" "pipeline_execution" {
-  name               = "${var.project}-${var.environment}-pipeline-exec-role"
-  assume_role_policy = data.aws_iam_policy_document.sagemaker_assume.json
-  tags               = var.tags
-}
-
-resource "aws_iam_role_policy_attachment" "pipeline_sagemaker" {
-  role       = aws_iam_role.pipeline_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "pipeline_s3" {
-  role       = aws_iam_role.pipeline_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }

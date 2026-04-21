@@ -6,17 +6,17 @@ on:
       - "terraform/**"
       - ".github/workflows/terraform.yml"
   push:
-    branches: [main]
+    branches: [ main ]
     paths:
       - "terraform/**"
 
 permissions:
-  id-token: write   # Required for OIDC authentication
+  id-token: write # Required for OIDC authentication
   contents: read
-  pull-requests: write  # Required to post plan as PR comment
+  pull-requests: write # Required to post plan as PR comment
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: eu-west-2
   TF_VERSION: "~1.6"
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]   # Only plan dev on PRs; staging/prod planned in their own deploy jobs
+        env: [ dev ] # Only plan dev on PRs; staging/prod planned in their own deploy jobs
 
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
     name: Apply (dev)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: dev   # Maps to GitHub Environment "dev" (no approval required)
+    environment: dev # Maps to GitHub Environment "dev" (no approval required)
 
     steps:
       - uses: actions/checkout@v4
@@ -119,7 +119,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: terraform-apply-dev
-    environment: staging   # Requires manual approval in GitHub Environments settings
+    environment: staging # Requires manual approval in GitHub Environments settings
 
     steps:
       - uses: actions/checkout@v4
@@ -149,7 +149,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: terraform-apply-staging
-    environment: prod   # Requires manual approval in GitHub Environments settings
+    environment: prod # Requires manual approval in GitHub Environments settings
 
     steps:
       - uses: actions/checkout@v4

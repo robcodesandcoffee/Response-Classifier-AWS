@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "response-classifier-ml"
+  default = "response-classifier"
 }
 
 variable "environment" {
@@ -36,4 +36,14 @@ variable "private_subnet_cidrs" {
 variable "availability_zones" {
   type    = list(string)
   default = ["eu-west-2a", "eu-west-2b"]
+}
+
+variable "training_instance_type" {
+  type    = string
+  default = "ml.m5.xlarge"
+}
+
+variable "sso_username" {
+  description = "IAM Identity Center username"
+  type        = string
 }

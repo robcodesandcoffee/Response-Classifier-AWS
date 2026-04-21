@@ -1,9 +1,5 @@
 # Terraform
 .terraform
 
-<<<<<<< HEAD
-# VS Code
-=======
 # vscode
->>>>>>> bbd7372 (Updating gitignore file)
 .vscode

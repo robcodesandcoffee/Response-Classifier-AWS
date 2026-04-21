@@ -21,8 +21,8 @@ help:                           ## Show this help
 tf-init:                        ## Initialise Terraform (ENV=dev)
 	cd $(TF_DIR) && terraform init
 
-tf-plan:                        ## Plan Terraform changes (ENV=dev)
-	cd $(TF_DIR) && terraform plan -var-file=terraform.tfvars
+tf-plan:                        ## Plan changes, save binary to tfplan.ENV and output to tfplan.ENV.txt (ENV=dev)
+	cd $(TF_DIR) && terraform plan -var-file=terraform.tfvars -out=tfplan.$(ENV) | tee tfplan.$(ENV).txt
 
 tf-apply:                       ## Apply Terraform changes (ENV=dev)
 	cd $(TF_DIR) && terraform apply -var-file=terraform.tfvars -auto-approve

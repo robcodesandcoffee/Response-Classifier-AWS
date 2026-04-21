@@ -7,6 +7,9 @@ tfplan.*
 .terraform.lock.hcl
 crash.log
 
+# vscode
+.vscode
+
 # CDK
 cdk/cdk.out/
 

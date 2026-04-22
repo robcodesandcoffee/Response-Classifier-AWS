@@ -1,0 +1,167 @@
+name: Deploy Terraform
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: "Action to perform"
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  id-token: write # Required for OIDC authentication
+  contents: read
+  pull-requests: write # Required to post plan as PR comment
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: "~1.6"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Pull requests: run `terraform plan` against dev and post as PR comment.
+  # No infrastructure is applied — this is review-only.
+  # ─────────────────────────────────────────────────────────────────────────
+  terraform-plan:
+    name: Plan (dev) — PR
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [ dev ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: terraform/environments/${{ matrix.env }}
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file=terraform.tfvars -no-color -out=tfplan
+        working-directory: terraform/environments/${{ matrix.env }}
+        continue-on-error: true
+
+      - name: Post plan as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### Terraform Plan — \`${{ matrix.env }}\`
+            **Init**: \`${{ steps.init.outcome }}\`
+            **Plan**: \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Fail if plan failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Manual run: engineer picks the target environment and whether to plan
+  # or apply. Branch/tag is chosen via the "Use workflow from" dropdown
+  # in the GitHub Actions UI.
+  #
+  # Staging and prod still go through GitHub Environment approval gates
+  # because we set `environment:` on the job.
+  # ─────────────────────────────────────────────────────────────────────────
+  terraform:
+    name: ${{ inputs.action }} → ${{ inputs.environment }}
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Run summary
+        run: |
+          {
+            echo "## Terraform ${{ inputs.action }}"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | \`${{ github.repository }}\` |"
+            echo "| Environment | \`${{ inputs.environment }}\` |"
+            echo "| Action | \`${{ inputs.action }}\` |"
+            echo "| Ref | \`${{ github.ref_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo "| Triggered by | @${{ github.actor }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v4
+
+      - name: Resolve AWS role for environment
+        id: role
+        env:
+          ROLE_DEV: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          ROLE_STAGING: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+          ROLE_PROD: ${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}
+        run: |
+          case "${{ inputs.environment }}" in
+            dev)     echo "role=$ROLE_DEV"     >> "$GITHUB_OUTPUT" ;;
+            staging) echo "role=$ROLE_STAGING" >> "$GITHUB_OUTPUT" ;;
+            prod)    echo "role=$ROLE_PROD"    >> "$GITHUB_OUTPUT" ;;
+            *)       echo "Unknown environment: ${{ inputs.environment }}" >&2; exit 1 ;;
+          esac
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.role.outputs.role }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/environments/${{ inputs.environment }}
+
+      - name: Terraform Plan
+        if: inputs.action == 'plan'
+        run: terraform plan -var-file=terraform.tfvars
+        working-directory: terraform/environments/${{ inputs.environment }}
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        run: terraform apply -var-file=terraform.tfvars -auto-approve
+        working-directory: terraform/environments/${{ inputs.environment }}

@@ -21,8 +21,12 @@ help:                           ## Show this help
 tf-init:                        ## Initialise Terraform (ENV=dev)
 	cd $(TF_DIR) && terraform init
 
-tf-plan:                        ## Plan Terraform changes (ENV=dev)
-	cd $(TF_DIR) && terraform plan -var-file=terraform.tfvars
+tf-plan:                        ## Plan changes, save binary and generate readable markdown in docs/ (ENV=dev)
+	cd $(TF_DIR) && terraform plan -var-file=terraform.tfvars -out=tfplan.$(ENV)
+	@printf "# Terraform Plan — $(ENV) — $$(date '+%Y-%m-%d %H:%M')\n\n\`\`\`\n" > docs/tfplan.$(ENV).md
+	cd $(TF_DIR) && terraform show -no-color tfplan.$(ENV) >> ../../../docs/tfplan.$(ENV).md
+	@printf "\`\`\`\n" >> docs/tfplan.$(ENV).md
+	@echo "Plan saved to docs/tfplan.$(ENV).md"
 
 tf-apply:                       ## Apply Terraform changes (ENV=dev)
 	cd $(TF_DIR) && terraform apply -var-file=terraform.tfvars -auto-approve

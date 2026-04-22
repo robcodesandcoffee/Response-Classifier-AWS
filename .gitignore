@@ -1,9 +1,27 @@
 # Terraform
-.terraform
+tfplan.*
+*.tfplan.txt
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
 
-<<<<<<< HEAD
-# VS Code
-=======
 # vscode
->>>>>>> bbd7372 (Updating gitignore file)
 .vscode
+
+# CDK
+cdk/cdk.out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store

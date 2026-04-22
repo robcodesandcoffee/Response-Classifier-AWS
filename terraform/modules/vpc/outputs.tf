@@ -1,0 +1,3 @@
+output "vpc_id" { value = aws_vpc.this.id }
+output "private_subnet_ids" { value = aws_subnet.private[*].id }
+output "sagemaker_sg_id" { value = aws_security_group.sagemaker.id }

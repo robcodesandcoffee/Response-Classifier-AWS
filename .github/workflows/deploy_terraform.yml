@@ -30,7 +30,7 @@ permissions:
   pull-requests: write # Required to post plan as PR comment
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: eu-west-2
   TF_VERSION: "~1.6"
 
 jobs:
@@ -129,23 +129,12 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Resolve AWS role for environment
-        id: role
-        env:
-          ROLE_DEV: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          ROLE_STAGING: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
-          ROLE_PROD: ${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}
-        run: |
-          case "${{ inputs.environment }}" in
-            dev)     echo "role=$ROLE_DEV"     >> "$GITHUB_OUTPUT" ;;
-            staging) echo "role=$ROLE_STAGING" >> "$GITHUB_OUTPUT" ;;
-            prod)    echo "role=$ROLE_PROD"    >> "$GITHUB_OUTPUT" ;;
-            *)       echo "Unknown environment: ${{ inputs.environment }}" >&2; exit 1 ;;
-          esac
-
+      # AWS_ROLE_TO_ASSUME is defined as an *environment secret* in each
+      # GitHub Environment (dev/staging/prod), so `secrets.AWS_ROLE_TO_ASSUME`
+      # resolves to the per-environment role ARN automatically.
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ steps.role.outputs.role }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: hashicorp/setup-terraform@v3

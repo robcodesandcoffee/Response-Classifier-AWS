@@ -39,7 +39,7 @@ jobs:
   # No infrastructure is applied — this is review-only.
   # ─────────────────────────────────────────────────────────────────────────
   terraform-plan:
-    name: Plan (dev) — PR
+    name: Terraform Plan — PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
@@ -106,7 +106,7 @@ jobs:
   # because we set `environment:` on the job.
   # ─────────────────────────────────────────────────────────────────────────
   terraform:
-    name: ${{ inputs.action }} → ${{ inputs.environment }}
+    name: terraform ${{ inputs.action }} → ${{ inputs.environment }}
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}

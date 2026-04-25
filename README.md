@@ -10,6 +10,7 @@ A machine learning project for response classification, deployed on AWS using **
 response-classifier-aws/
 │
 ├── .devcontainer/                # VS Code / GitHub Codespaces dev container
+|   ├── bash_profile              # Added aliases, env vars, and functions for the shell
 │   ├── devcontainer.json         # Container config, extensions, and VS Code settings
 │   ├── Dockerfile                # Python 3.12, Terraform, AWS CDK, AWS CLI
 │   └── post-create.sh            # Runs after build — installs deps, aliases, Jupyter kernel
@@ -39,13 +40,13 @@ response-classifier-aws/
 │       └── pipeline_trigger_stack.py # Pipeline trigger Lambda stack
 │
 ├── notebooks/                    # Jupyter notebooks organised by ML lifecycle stage
-│   ├── 01_eda/
+│   ├── eda/
 │   │   └── eda_exploration.ipynb # Exploratory data analysis
-│   ├── 02_training/
+│   ├── training/
 │   │   └── model_training.ipynb  # Model training experiments
-│   ├── 03_evaluation/
+│   ├── evaluation/
 │   │   └── model_evaluation.ipynb # Model evaluation and metrics
-│   └── 04_deployment/
+│   └── deployment/
 │       └── deployment_testing.ipynb # Post-deployment smoke tests
 │
 ├── scripts/                      # Standalone Python utility scripts

@@ -132,8 +132,6 @@ jobs:
             echo "| Commit | \`${{ github.sha }}\` |"
             echo "| Triggered by | @${{ github.actor }} |"
           } >> "$GITHUB_STEP_SUMMARY"
-          - name: Debug
-            run: echo "role is set:${{ secrets.AWS_ROLE_TO_ASSUME != '' }}"
 
       # ───────────────────────────────────────────────────────────────────
       # Destroy guards: only allow destroy in dev, and require an explicit
@@ -152,6 +150,13 @@ jobs:
           exit 1
 
       - uses: actions/checkout@v4
+
+      # TEMP: confirm the env-scoped secret resolves before the AWS step
+      # tries to use it. Remove once OIDC auth is verified working.
+      - name: Debug — is AWS_ROLE_TO_ASSUME set?
+        run: |
+          echo "AWS_ROLE_TO_ASSUME is set: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}"
+          echo "Environment: ${{ inputs.environment }}"
 
       # AWS_ROLE_TO_ASSUME is defined as an *environment secret* in each
       # GitHub Environment (dev/staging/prod), so `secrets.AWS_ROLE_TO_ASSUME`

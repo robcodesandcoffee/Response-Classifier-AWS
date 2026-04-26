@@ -23,6 +23,12 @@ on:
         options:
           - plan
           - apply
+          - destroy
+      confirm:
+        description: "Type 'destroy-dev' to confirm a destroy (ignored for plan/apply)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   id-token: write # Required for OIDC authentication
@@ -39,7 +45,7 @@ jobs:
   # No infrastructure is applied — this is review-only.
   # ─────────────────────────────────────────────────────────────────────────
   terraform-plan:
-    name: Terraform Plan — PR
+    name: Plan (dev) — PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
@@ -106,7 +112,7 @@ jobs:
   # because we set `environment:` on the job.
   # ─────────────────────────────────────────────────────────────────────────
   terraform:
-    name: terraform ${{ inputs.action }} → ${{ inputs.environment }}
+    name: ${{ inputs.action }} → ${{ inputs.environment }}
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
@@ -126,6 +132,22 @@ jobs:
             echo "| Commit | \`${{ github.sha }}\` |"
             echo "| Triggered by | @${{ github.actor }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # ───────────────────────────────────────────────────────────────────
+      # Destroy guards: only allow destroy in dev, and require an explicit
+      # confirmation string so it can't be triggered by a stray click.
+      # ───────────────────────────────────────────────────────────────────
+      - name: Guard — destroy is dev-only
+        if: inputs.action == 'destroy' && inputs.environment != 'dev'
+        run: |
+          echo "::error::Destroy is only allowed against the 'dev' environment. Refusing to destroy '${{ inputs.environment }}'."
+          exit 1
+
+      - name: Guard — destroy requires confirmation
+        if: inputs.action == 'destroy' && inputs.confirm != 'destroy-dev'
+        run: |
+          echo "::error::To destroy dev you must type 'destroy-dev' in the confirm input. Got: '${{ inputs.confirm }}'."
+          exit 1
 
       - uses: actions/checkout@v4
 
@@ -153,4 +175,9 @@ jobs:
       - name: Terraform Apply
         if: inputs.action == 'apply'
         run: terraform apply -var-file=terraform.tfvars -auto-approve
+        working-directory: terraform/environments/${{ inputs.environment }}
+
+      - name: Terraform Destroy
+        if: inputs.action == 'destroy'
+        run: terraform destroy -var-file=terraform.tfvars -auto-approve
         working-directory: terraform/environments/${{ inputs.environment }}

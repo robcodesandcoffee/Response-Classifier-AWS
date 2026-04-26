@@ -120,15 +120,18 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 # ---------------------------------------------------------------------------
-# Interface endpoints — SageMaker, ECR, CloudWatch, STS
-# These replace the NAT Gateway for all AWS service traffic
+# Interface endpoints — SageMaker, CloudWatch, STS
+# These replace the NAT Gateway for SageMaker control-plane / runtime traffic.
+#
+# ECR endpoints (ecr-api / ecr-dkr) intentionally not included: notebook-
+# deployed endpoints run in the SageMaker-managed VPC by default, so the
+# customer VPC doesn't need to reach ECR. Add them back here if you start
+# deploying endpoints inside this VPC with a custom container image.
 # ---------------------------------------------------------------------------
 locals {
   interface_endpoints = {
     "sagemaker-api"     = "com.amazonaws.${var.region}.sagemaker.api"
     "sagemaker-runtime" = "com.amazonaws.${var.region}.sagemaker.runtime"
-    "ecr-api"           = "com.amazonaws.${var.region}.ecr.api"
-    "ecr-dkr"           = "com.amazonaws.${var.region}.ecr.dkr"
     "logs"              = "com.amazonaws.${var.region}.logs"
     "sts"               = "com.amazonaws.${var.region}.sts"
   }

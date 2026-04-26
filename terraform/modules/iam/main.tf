@@ -1,5 +1,10 @@
 ################################################################################
-# IAM Module — SageMaker roles & policies
+# IAM Module — single SageMaker execution role
+#
+# This role is attached to the Studio domain and passed to any training job,
+# pipeline, or endpoint the notebook creates. AmazonSageMakerFullAccess
+# already covers ECR pulls for AWS-managed SageMaker images, so no separate
+# ECR policy is needed.
 ################################################################################
 
 data "aws_iam_policy_document" "sagemaker_assume" {
@@ -13,7 +18,7 @@ data "aws_iam_policy_document" "sagemaker_assume" {
 }
 
 # ---------------------------------------------------------------------------
-# SageMaker Execution Role (Studio)
+# SageMaker Execution Role (Studio, training jobs, pipelines, endpoints)
 # ---------------------------------------------------------------------------
 resource "aws_iam_role" "sagemaker_execution" {
   name               = "${var.project}-${var.environment}-sagemaker-exec-role"

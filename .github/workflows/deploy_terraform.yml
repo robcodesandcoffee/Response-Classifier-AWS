@@ -132,6 +132,8 @@ jobs:
             echo "| Commit | \`${{ github.sha }}\` |"
             echo "| Triggered by | @${{ github.actor }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+          - name: Debug
+            run: echo "role is set:${{ secrets.AWS_ROLE_TO_ASSUME != '' }}"
 
       # ───────────────────────────────────────────────────────────────────
       # Destroy guards: only allow destroy in dev, and require an explicit

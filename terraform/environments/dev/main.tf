@@ -97,3 +97,25 @@ module "sagemaker_studio" {
   sso_username          = var.sso_username
   tags                  = local.common_tags
 }
+
+# ---------------------------------------------------------------------------
+# SageMaker Pipelines, Models, and Endpoints are NOT managed by Terraform.
+# Define and deploy them from the SageMaker Studio notebook using the
+# SageMaker Python SDK (Estimator.fit(), Model.deploy(), Pipeline.upsert()).
+#
+# Terraform's job here is to provision the *infrastructure* — VPC, IAM,
+# S3, Studio domain — and let the notebook own the model lifecycle.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# SageMaker Feature Store — disabled for single engineer setup
+# Enable later if online feature serving is needed
+# ---------------------------------------------------------------------------
+# module "sagemaker_feature_store" {
+#   source = "../../modules/sagemaker_feature_store"
+#   project            = var.project
+#   environment        = var.environment
+#   execution_role_arn = module.iam.sagemaker_execution_role_arn
+#   data_bucket_name   = module.s3.data_bucket_name
+#   tags               = local.common_tags
+# }

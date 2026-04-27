@@ -45,7 +45,7 @@ jobs:
   # No infrastructure is applied — this is review-only.
   # ─────────────────────────────────────────────────────────────────────────
   terraform-plan:
-    name: Plan (dev) — PR
+    name: Teraform Plan (dev) — PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:

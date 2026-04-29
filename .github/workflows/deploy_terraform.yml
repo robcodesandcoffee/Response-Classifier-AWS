@@ -158,7 +158,7 @@ jobs:
           echo "AWS_ROLE_TO_ASSUME is set: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}"
           echo "Environment: ${{ inputs.environment }}"
 
-      # AWS_ROLE_TO_ASSUME is defined as an *environment secret* in each
+      # AWS_ROLE_TO_ASSUME is defined as an "environment secret" in each
       # GitHub Environment (dev/staging/prod), so `secrets.AWS_ROLE_TO_ASSUME`
       # resolves to the per-environment role ARN automatically.
       - uses: aws-actions/configure-aws-credentials@v4

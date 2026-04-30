@@ -29,6 +29,13 @@ resource "aws_sagemaker_domain" "studio" {
 
   app_network_access_type = "VpcOnly"
 
+  # Delete the auto-provisioned EFS file system when the domain is destroyed.
+  # Without this, EFS + its mount targets are retained and block subnet/VPC
+  # deletion with a DependencyViolation.
+  retention_policy {
+    home_efs_file_system = "Delete"
+  }
+
   tags = merge(var.tags, { Name = "${var.project}-${var.environment}-studio" })
 }
 

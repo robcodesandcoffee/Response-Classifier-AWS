@@ -1,5 +1,5 @@
 ################################################################################
-# SageMaker Studio Module
+# SageMaker Studio Module — single ML engineer setup
 ################################################################################
 
 resource "aws_sagemaker_domain" "studio" {
@@ -16,7 +16,6 @@ resource "aws_sagemaker_domain" "studio" {
       default_resource_spec {
         instance_type = "system"
       }
-
       lifecycle_config_arns = [aws_sagemaker_studio_lifecycle_config.auto_install.arn]
     }
 
@@ -24,13 +23,7 @@ resource "aws_sagemaker_domain" "studio" {
       default_resource_spec {
         instance_type = "system"
       }
-
       lifecycle_config_arns = [aws_sagemaker_studio_lifecycle_config.auto_install.arn]
-    }
-
-    sharing_settings {
-      notebook_output_option = "Allowed"
-      s3_output_path         = "s3://${var.artifacts_bucket_name}/studio-outputs/"
     }
   }
 
@@ -40,45 +33,23 @@ resource "aws_sagemaker_domain" "studio" {
 }
 
 # ---------------------------------------------------------------------------
-# User profile — must match the IAM Identity Center username (e.g. email prefix)
+# Single user profile — linked to IAM Identity Center username
 # ---------------------------------------------------------------------------
-resource "aws_sagemaker_user_profile" "default" {
+resource "aws_sagemaker_user_profile" "ml_engineer" {
   domain_id         = aws_sagemaker_domain.studio.id
   user_profile_name = var.sso_username
 
   user_settings {
     execution_role  = var.execution_role_arn
     security_groups = [var.security_group_id]
+
+    # Default to smallest CPU instance — engineer can change at launch time
+    kernel_gateway_app_settings {
+      default_resource_spec {
+        instance_type = "ml.t3.medium"
+      }
+    }
   }
-
-  tags = var.tags
-}
-
-# ---------------------------------------------------------------------------
-# Lifecycle config — installs packages when a kernel starts
-# ---------------------------------------------------------------------------
-resource "aws_sagemaker_studio_lifecycle_config" "auto_install" {
-  studio_lifecycle_config_name     = "${var.project}-${var.environment}-auto-install"
-  studio_lifecycle_config_app_type = "KernelGateway"
-
-  studio_lifecycle_config_content = base64encode(<<-EOF
-    #!/bin/bash
-    set -eux
-    pip install --upgrade pip --quiet
-    pip install --quiet \
-      pandas \
-      scikit-learn \
-      xgboost \
-      lightgbm \
-      matplotlib \
-      seaborn \
-      plotly \
-      shap \
-      "sagemaker>=2.200.0" \
-      "boto3>=1.34.0"
-    echo "Lifecycle config complete"
-  EOF
-  )
 
   tags = var.tags
 }

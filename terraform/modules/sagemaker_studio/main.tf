@@ -53,3 +53,32 @@ resource "aws_sagemaker_user_profile" "ml_engineer" {
 
   tags = var.tags
 }
+
+# ---------------------------------------------------------------------------
+# Lifecycle config — installs packages when a kernel starts
+# ---------------------------------------------------------------------------
+resource "aws_sagemaker_studio_lifecycle_config" "auto_install" {
+  studio_lifecycle_config_name     = "${var.project}-${var.environment}-auto-install"
+  studio_lifecycle_config_app_type = "KernelGateway"
+
+  studio_lifecycle_config_content = base64encode(<<-EOF
+    #!/bin/bash
+    set -eux
+    pip install --upgrade pip --quiet
+    pip install --quiet \
+      pandas \
+      scikit-learn \
+      xgboost \
+      lightgbm \
+      matplotlib \
+      seaborn \
+      plotly \
+      shap \
+      "sagemaker>=2.200.0" \
+      "boto3>=1.34.0"
+    echo "Lifecycle config complete"
+  EOF
+  )
+
+  tags = var.tags
+}

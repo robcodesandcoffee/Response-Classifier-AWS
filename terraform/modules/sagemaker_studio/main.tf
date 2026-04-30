@@ -55,7 +55,8 @@ resource "aws_sagemaker_user_profile" "ml_engineer" {
 }
 
 # ---------------------------------------------------------------------------
-# Lifecycle config — installs packages when a kernel starts
+# Lifecycle config — minimal packages for response classification work
+# Runs once when a kernel starts — keep it lean to reduce startup time
 # ---------------------------------------------------------------------------
 resource "aws_sagemaker_studio_lifecycle_config" "auto_install" {
   studio_lifecycle_config_name     = "${var.project}-${var.environment}-auto-install"
@@ -66,16 +67,12 @@ resource "aws_sagemaker_studio_lifecycle_config" "auto_install" {
     set -eux
     pip install --upgrade pip --quiet
     pip install --quiet \
+      "sagemaker>=2.200.0" \
+      "boto3>=1.34.0" \
       pandas \
       scikit-learn \
       xgboost \
-      lightgbm \
-      matplotlib \
-      seaborn \
-      plotly \
-      shap \
-      "sagemaker>=2.200.0" \
-      "boto3>=1.34.0"
+      matplotlib
     echo "Lifecycle config complete"
   EOF
   )

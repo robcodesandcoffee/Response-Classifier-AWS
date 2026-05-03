@@ -17,4 +17,5 @@ alias cdksynth="make cdk-synth ENV=dev"
 alias whoami-aws="aws sts get-caller-identity --profile DevAccess"
 
 # Default environment
+alias ll="ls -lh"
 export ENV=dev

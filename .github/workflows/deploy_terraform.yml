@@ -45,7 +45,7 @@ jobs:
   # No infrastructure is applied — this is review-only.
   # ─────────────────────────────────────────────────────────────────────────
   terraform-plan:
-    name: Plan (dev) — PR
+    name: Teraform Plan (dev) — PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
@@ -151,14 +151,14 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      # TEMP: confirm the env-scoped secret resolves before the AWS step
+      # Confirm the env-scoped secret resolves before the AWS step
       # tries to use it. Remove once OIDC auth is verified working.
       - name: Debug — is AWS_ROLE_TO_ASSUME set?
         run: |
           echo "AWS_ROLE_TO_ASSUME is set: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}"
           echo "Environment: ${{ inputs.environment }}"
 
-      # AWS_ROLE_TO_ASSUME is defined as an *environment secret* in each
+      # AWS_ROLE_TO_ASSUME is defined as an "environment secret" in each
       # GitHub Environment (dev/staging/prod), so `secrets.AWS_ROLE_TO_ASSUME`
       # resolves to the per-environment role ARN automatically.
       - uses: aws-actions/configure-aws-credentials@v4

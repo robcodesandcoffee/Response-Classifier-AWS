@@ -16,7 +16,7 @@ help:                           ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 # ---------------------------------------------------------------------------
-# Terraform
+# Terraform Aliases
 # ---------------------------------------------------------------------------
 tf-init:                        ## Initialise Terraform (ENV=dev)
 	cd $(TF_DIR) && terraform init
@@ -44,7 +44,7 @@ tf-validate:                    ## Validate Terraform configuration
 	cd $(TF_DIR) && terraform validate
 
 # ---------------------------------------------------------------------------
-# AWS CDK
+# AWS CDK Aliases
 # ---------------------------------------------------------------------------
 cdk-bootstrap:                  ## Bootstrap CDK in account/region
 	cd $(CDK_DIR) && cdk bootstrap --context env=$(ENV)

@@ -1,6 +1,5 @@
-# ── Response Classifier AWS — persistent shell customisations ─────────────────
+# ── Response Classifier AWS — persistent shell customisations ───
 # This file is sourced by .bashrc on container start.
-# Add aliases, env vars, and functions here — they survive rebuilds.
 
 # AWS shortcuts
 alias tf="terraform"

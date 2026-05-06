@@ -29,16 +29,8 @@ echo ""
 # Installed directly into the container — no venv needed, Docker is the isolation layer
 echo "▶ Installing Python packages..."
 python -m pip install --quiet --upgrade pip setuptools wheel
-
-python -m pip install --quiet \
-    `# AWS & SageMaker SDK` \
-    sagemaker boto3 botocore \
-    `# AWS CDK (Python)` \
-    aws-cdk-lib constructs \
-    `# Utilities` \
-    python-dotenv pyyaml requests tqdm \
-    `# Dev tools` \
-    flake8 black
+python -m pip install --quiet -r requirements.txt
+python -m pip install --quiet flake8 black   # dev-only tools
 
 echo "  ✓ Python packages installed"
 echo ""

@@ -1,0 +1,191 @@
+name: CDK Deploy
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "cdk/**"
+      - "requirements.txt"
+      - ".github/workflows/cdk-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: dev
+        type: choice
+        options: [ dev, staging, prod ]
+      stack:
+        description: "Stack to deploy (leave blank for all)"
+        required: false
+        default: ""
+      ref:
+        description: "Branch, tag, or commit SHA to deploy from (defaults to the ref you
+          dispatched from)"
+        required: false
+        default: ""
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Deploy to dev automatically on merge to main
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-dev:
+    name: Deploy CDK (dev)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK Deploy (all stacks)
+        run: cdk deploy --all --context env=dev --require-approval never
+        working-directory: cdk
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Staging: waits for dev, then requires manual approval
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy CDK (staging)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK Deploy (all stacks)
+        run: cdk deploy --all --context env=staging --require-approval never
+        working-directory: cdk
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Production: waits for staging, requires manual approval
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-prod:
+    name: Deploy CDK (prod)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK Deploy (all stacks)
+        run: cdk deploy --all --context env=prod --require-approval never
+        working-directory: cdk
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Manual dispatch: deploy a specific stack to a specific environment
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-manual:
+    name: Deploy CDK (manual — ${{ inputs.environment }} from ${{ inputs.ref ||
+      github.ref_name }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Guard prod from non-main deploys
+        if: inputs.environment == 'prod' && inputs.ref != '' && inputs.ref != 'main'
+        run: |
+          echo "Refusing to deploy '${{ inputs.ref }}' to prod. Production deploys must come from main."
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK Deploy
+        run: |
+          STACK="${{ inputs.stack }}"
+          if [ -z "$STACK" ]; then
+            cdk deploy --all --context env=${{ inputs.environment }} --require-approval never
+          else
+            cdk deploy "$STACK" --context env=${{ inputs.environment }} --require-approval never
+          fi
+        working-directory: cdk

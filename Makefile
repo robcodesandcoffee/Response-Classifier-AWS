@@ -47,7 +47,7 @@ tf-validate:                    ## Validate Terraform configuration
 # AWS CDK Aliases
 # ---------------------------------------------------------------------------
 cdk-bootstrap:                  ## Bootstrap CDK in account/region
-	cd $(CDK_DIR) && cdk bootstrap --context env=$(ENV)
+	cd $(CDK_DIR) && cdk bootstrap aws://$$(aws sts get-caller-identity --query Account --output text)/$(REGION) --context env=$(ENV)
 
 cdk-synth:                      ## Synthesise CDK stacks (ENV=dev)
 	cd $(CDK_DIR) && cdk synth --context env=$(ENV)

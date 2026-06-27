@@ -81,7 +81,8 @@ jobs:
             exit 1
           fi
 
-          ID_TOKEN=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN_RESPONSE=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])' <<<"${ID_TOKEN_RESPONSE}")
           if [ -z "${ID_TOKEN:-}" ]; then
             echo "::error::Failed to fetch GitHub OIDC token."
             exit 1
@@ -206,7 +207,8 @@ jobs:
             exit 1
           fi
 
-          ID_TOKEN=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN_RESPONSE=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])' <<<"${ID_TOKEN_RESPONSE}")
           if [ -z "${ID_TOKEN:-}" ]; then
             echo "::error::Failed to fetch GitHub OIDC token."
             exit 1
@@ -279,7 +281,8 @@ jobs:
             exit 1
           fi
 
-          ID_TOKEN=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN_RESPONSE=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])' <<<"${ID_TOKEN_RESPONSE}")
           if [ -z "${ID_TOKEN:-}" ]; then
             echo "::error::Failed to fetch GitHub OIDC token."
             exit 1
@@ -364,7 +367,8 @@ jobs:
             exit 1
           fi
 
-          ID_TOKEN=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN_RESPONSE=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+          ID_TOKEN=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])' <<<"${ID_TOKEN_RESPONSE}")
           if [ -z "${ID_TOKEN:-}" ]; then
             echo "::error::Failed to fetch GitHub OIDC token."
             exit 1

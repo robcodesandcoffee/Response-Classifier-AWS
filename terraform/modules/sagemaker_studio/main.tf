@@ -2,6 +2,68 @@
 # SageMaker Studio Module — single ML engineer setup
 ################################################################################
 
+data "aws_region" "current" {}
+
+# ---------------------------------------------------------------------------
+# Pre-destroy: delete all Studio apps before Terraform removes the user
+# profile and domain. SageMaker rejects profile/domain deletion while any
+# app is in a non-Deleted state (InService, Pending, Deleting).
+# This null_resource depends on both resources so it is destroyed first,
+# giving the destroy provisioner a chance to clean up before they are removed.
+# ---------------------------------------------------------------------------
+resource "null_resource" "delete_sagemaker_apps" {
+  triggers = {
+    domain_id         = aws_sagemaker_domain.studio.id
+    user_profile_name = aws_sagemaker_user_profile.ml_engineer.user_profile_name
+    region            = data.aws_region.current.name
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOF
+      DOMAIN_ID="${self.triggers.domain_id}"
+      REGION="${self.triggers.region}"
+
+      echo "Deleting all SageMaker Studio apps in domain $DOMAIN_ID..."
+
+      aws sagemaker list-apps \
+        --domain-id-equals "$DOMAIN_ID" \
+        --region "$REGION" \
+        --query 'Apps[?Status!=`Deleted`].[DomainId,UserProfileName,AppType,AppName]' \
+        --output text | \
+      while IFS=$'\t' read -r d u t n; do
+        [ -z "$n" ] && continue
+        echo "  Deleting app: $n ($t)"
+        aws sagemaker delete-app \
+          --domain-id "$d" \
+          --user-profile-name "$u" \
+          --app-type "$t" \
+          --app-name "$n" \
+          --region "$REGION" 2>/dev/null || true
+      done
+
+      echo "Waiting for apps to finish deleting..."
+      for i in $(seq 1 30); do
+        COUNT=$(aws sagemaker list-apps \
+          --domain-id-equals "$DOMAIN_ID" \
+          --region "$REGION" \
+          --query 'length(Apps[?Status!=`Deleted`])' \
+          --output text 2>/dev/null || echo "0")
+        [ "$COUNT" = "0" ] && echo "All apps deleted." && exit 0
+        echo "  $COUNT app(s) still deleting ($i/30)..."
+        sleep 20
+      done
+      echo "Warning: some apps may still be deleting — terraform destroy may need a retry."
+      exit 0
+    EOF
+  }
+
+  depends_on = [
+    aws_sagemaker_user_profile.ml_engineer,
+    aws_sagemaker_domain.studio,
+  ]
+}
+
 resource "aws_sagemaker_domain" "studio" {
   domain_name = "${var.project}-${var.environment}-studio"
   auth_mode   = "SSO"

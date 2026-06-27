@@ -106,7 +106,7 @@ jobs:
           echo "AWS_DEFAULT_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
           echo "AWS_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
 
-          aws sts get-caller-identity --output json
+          AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"           AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"           AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"           AWS_DEFAULT_REGION="${AWS_REGION}"           AWS_REGION="${AWS_REGION}"           aws sts get-caller-identity --output json
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -232,7 +232,7 @@ jobs:
           echo "AWS_DEFAULT_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
           echo "AWS_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
 
-          aws sts get-caller-identity --output json
+          AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"           AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"           AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"           AWS_DEFAULT_REGION="${AWS_REGION}"           AWS_REGION="${AWS_REGION}"           aws sts get-caller-identity --output json
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -306,7 +306,7 @@ jobs:
           echo "AWS_DEFAULT_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
           echo "AWS_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
 
-          aws sts get-caller-identity --output json
+          AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"           AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"           AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"           AWS_DEFAULT_REGION="${AWS_REGION}"           AWS_REGION="${AWS_REGION}"           aws sts get-caller-identity --output json
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -392,7 +392,7 @@ jobs:
           echo "AWS_DEFAULT_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
           echo "AWS_REGION=${AWS_REGION}" >> "$GITHUB_ENV"
 
-          aws sts get-caller-identity --output json
+          AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"           AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"           AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"           AWS_DEFAULT_REGION="${AWS_REGION}"           AWS_REGION="${AWS_REGION}"           aws sts get-caller-identity --output json
 
       - uses: hashicorp/setup-terraform@v4
         with:

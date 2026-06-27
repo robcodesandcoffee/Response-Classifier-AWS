@@ -54,7 +54,7 @@ jobs:
         env: [dev]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check AWS auth availability
         id: aws-auth
@@ -68,13 +68,13 @@ jobs:
             echo "::warning::AWS_ROLE_TO_ASSUME is not available for the dev environment for this pull request run; skipping Terraform plan."
           fi
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         if: steps.aws-auth.outputs.enabled == 'true'
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
@@ -99,7 +99,7 @@ jobs:
 
       - name: Post plan as PR comment
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const skipped = '${{ steps.aws-auth.outputs.enabled }}' !== 'true';
@@ -134,16 +134,13 @@ jobs:
         run: exit 1
 
   # ─────────────────────────────────────────────────────────────────────────
-  # Manual run: engineer picks the target environment and whether to plan
-  # or apply. Branch/tag is chosen via the "Use workflow from" dropdown
-  # in the GitHub Actions UI.
-  #
-  # Staging and prod still go through GitHub Environment approval gates
-  # because we set `environment:` on the job.
+  # Manual run: engineer picks the target environment and whether to plan,
+  # apply, or destroy. Each action is surfaced as its own job in the UI,
+  # so the workflow reads like a simple deployment flow.
   # ─────────────────────────────────────────────────────────────────────────
-  terraform:
-    name: ${{ inputs.action }} → ${{ inputs.environment }}
-    if: github.event_name == 'workflow_dispatch'
+  terraform-plan-manual:
+    name: Terraform Plan
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'plan'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
@@ -151,52 +148,26 @@ jobs:
       - name: Run summary
         run: |
           {
-            echo "## Terraform ${{ inputs.action }}"
+            echo "## Terraform Plan"
             echo ""
             echo "| Field | Value |"
             echo "| --- | --- |"
             echo "| Repository | \`${{ github.repository }}\` |"
             echo "| Environment | \`${{ inputs.environment }}\` |"
-            echo "| Action | \`${{ inputs.action }}\` |"
+            echo "| Action | \`plan\` |"
             echo "| Ref | \`${{ github.ref_name }}\` |"
             echo "| Commit | \`${{ github.sha }}\` |"
             echo "| Triggered by | @${{ github.actor }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # ───────────────────────────────────────────────────────────────────
-      # Destroy guards: only allow destroy in dev, and require an explicit
-      # confirmation string so it can't be triggered by a stray click.
-      # ───────────────────────────────────────────────────────────────────
-      - name: Guard — destroy is dev-only
-        if: inputs.action == 'destroy' && inputs.environment != 'dev'
-        run: |
-          echo "::error::Destroy is only allowed against the 'dev' environment. Refusing to destroy '${{ inputs.environment }}'."
-          exit 1
+      - uses: actions/checkout@v5
 
-      - name: Guard — destroy requires confirmation
-        if: inputs.action == 'destroy' && inputs.confirm != 'destroy-dev'
-        run: |
-          echo "::error::To destroy dev you must type 'destroy-dev' in the confirm input. Got: '${{ inputs.confirm }}'."
-          exit 1
-
-      - uses: actions/checkout@v4
-
-      # Confirm the env-scoped secret resolves before the AWS step
-      # tries to use it. Remove once OIDC auth is verified working.
-      - name: Debug — is AWS_ROLE_TO_ASSUME set?
-        run: |
-          echo "AWS_ROLE_TO_ASSUME is set: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}"
-          echo "Environment: ${{ inputs.environment }}"
-
-      # AWS_ROLE_TO_ASSUME is defined as an "environment secret" in each
-      # GitHub Environment (dev/staging/prod), so `secrets.AWS_ROLE_TO_ASSUME`
-      # resolves to the per-environment role ARN automatically.
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
@@ -205,16 +176,99 @@ jobs:
         working-directory: terraform/environments/${{ inputs.environment }}
 
       - name: Terraform Plan
-        if: inputs.action == 'plan'
         run: terraform plan -var-file=terraform.tfvars
         working-directory: terraform/environments/${{ inputs.environment }}
 
+  terraform-apply-manual:
+    name: Terraform Apply
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'apply'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Run summary
+        run: |
+          {
+            echo "## Terraform Apply"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | \`${{ github.repository }}\` |"
+            echo "| Environment | \`${{ inputs.environment }}\` |"
+            echo "| Action | \`apply\` |"
+            echo "| Ref | \`${{ github.ref_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo "| Triggered by | @${{ github.actor }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/environments/${{ inputs.environment }}
+
       - name: Terraform Apply
-        if: inputs.action == 'apply'
         run: terraform apply -var-file=terraform.tfvars -auto-approve
         working-directory: terraform/environments/${{ inputs.environment }}
 
+  terraform-destroy-manual:
+    name: Terraform Destroy
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'destroy'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Run summary
+        run: |
+          {
+            echo "## Terraform Destroy"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | \`${{ github.repository }}\` |"
+            echo "| Environment | \`${{ inputs.environment }}\` |"
+            echo "| Action | \`destroy\` |"
+            echo "| Ref | \`${{ github.ref_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo "| Triggered by | @${{ github.actor }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guard — destroy is dev-only
+        if: inputs.environment != 'dev'
+        run: |
+          echo "::error::Destroy is only allowed against the 'dev' environment. Refusing to destroy '${{ inputs.environment }}'."
+          exit 1
+
+      - name: Guard — destroy requires confirmation
+        if: inputs.confirm != 'destroy-dev'
+        run: |
+          echo "::error::To destroy dev you must type 'destroy-dev' in the confirm input. Got: '${{ inputs.confirm }}'."
+          exit 1
+
+      - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/environments/${{ inputs.environment }}
+
       - name: Terraform Destroy
-        if: inputs.action == 'destroy'
         run: terraform destroy -var-file=terraform.tfvars -auto-approve
         working-directory: terraform/environments/${{ inputs.environment }}

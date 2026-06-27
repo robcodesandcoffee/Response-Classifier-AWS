@@ -41,7 +41,7 @@ variable "training_instance_type" {
 }
 
 variable "sso_username" {
-  description = "IAM Identity Center username — must match exactly (check in IAM Identity Center → Users)"
+  description = "IAM Identity Center username — must match exactly (check in IAM Identity Center → Users). SageMaker Studio user profile names allow only letters, numbers, and hyphens."
   type        = string
 }
 

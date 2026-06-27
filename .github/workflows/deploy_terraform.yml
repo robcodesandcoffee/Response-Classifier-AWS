@@ -55,7 +55,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check AWS auth availability
+        id: aws-auth
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "AWS auth is configured for this run."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::AWS_ROLE_TO_ASSUME is not available for pull request runs; skipping Terraform plan."
+          fi
+
       - uses: aws-actions/configure-aws-credentials@v4
+        if: steps.aws-auth.outputs.enabled == 'true'
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
@@ -66,11 +79,13 @@ jobs:
 
       - name: Terraform Init
         id: init
+        if: steps.aws-auth.outputs.enabled == 'true'
         run: terraform init
         working-directory: terraform/environments/${{ matrix.env }}
 
       - name: Terraform Plan
         id: plan
+        if: steps.aws-auth.outputs.enabled == 'true'
         shell: bash
         run: |
           set -o pipefail
@@ -82,10 +97,18 @@ jobs:
         continue-on-error: true
 
       - name: Post plan as PR comment
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const output = `### Terraform Plan — \`${{ matrix.env }}\`
+            const skipped = '${{ steps.aws-auth.outputs.enabled }}' !== 'true';
+            const output = skipped
+              ? `### Terraform Plan — \`${{ matrix.env }}\`
+
+              ⚠️ Terraform plan was skipped because AWS credentials were not available for this pull request run.
+
+              *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
+              : `### Terraform Plan — \`${{ matrix.env }}\`
             **Init**: \`${{ steps.init.outcome }}\`
             **Plan**: \`${{ steps.plan.outcome }}\`
 

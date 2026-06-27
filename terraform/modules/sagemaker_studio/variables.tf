@@ -26,13 +26,13 @@ variable "artifacts_bucket_name" {
   type = string
 }
 
-variable "sso_username" {
-  description = "IAM Identity Center username — must match exactly to link the Studio profile to your SSO login"
+variable "studio_user_name" {
+  description = "Studio user profile name used for the IAM-authenticated SageMaker Studio user"
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$", var.sso_username))
-    error_message = "SSO username must be a valid SageMaker user profile name: letters, numbers, and hyphens only, no underscores, max 63 characters, and cannot begin or end with a hyphen."
+    condition     = can(regex("^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$", var.studio_user_name))
+    error_message = "Studio user name must be a valid SageMaker user profile name: letters, numbers, and hyphens only, no underscores, max 63 characters, and cannot begin or end with a hyphen."
   }
 }
 

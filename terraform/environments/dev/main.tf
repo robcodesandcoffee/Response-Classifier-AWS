@@ -98,7 +98,7 @@ module "sagemaker_studio" {
   security_group_id     = module.vpc.sagemaker_sg_id
   execution_role_arn    = module.iam.sagemaker_execution_role_arn
   artifacts_bucket_name = module.s3.artifacts_bucket_name
-  sso_username          = var.sso_username
+  studio_user_name      = var.studio_user_name
   tags                  = local.common_tags
 }
 

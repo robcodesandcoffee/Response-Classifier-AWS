@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "terraform/**"
-      - ".github/workflows/terraform.yml"
+      - ".github/workflows/deploy_terraform.yml"
   workflow_dispatch:
     inputs:
       environment:
@@ -45,12 +45,12 @@ jobs:
   # No infrastructure is applied — this is review-only.
   # ─────────────────────────────────────────────────────────────────────────
   terraform-plan:
-    name: Teraform Plan (dev) — PR
+    name: Terraform Plan (dev) — PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [ dev ]
+        env: [dev]
 
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +71,13 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=terraform.tfvars -no-color -out=tfplan
+        shell: bash
+        run: |
+          set -o pipefail
+          terraform plan -var-file=terraform.tfvars -no-color -out=tfplan 2>&1 | tee tfplan.txt
+          echo "plan_output<<EOF" >> "$GITHUB_OUTPUT"
+          cat tfplan.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
         working-directory: terraform/environments/${{ matrix.env }}
         continue-on-error: true
 
@@ -86,7 +92,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`terraform
-            ${{ steps.plan.outputs.stdout }}
+            ${{ steps.plan.outputs.plan_output }}
             \`\`\`
 
             </details>

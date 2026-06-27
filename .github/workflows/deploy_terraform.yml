@@ -48,6 +48,7 @@ jobs:
     name: Terraform Plan (dev) — PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    environment: dev
     strategy:
       matrix:
         env: [dev]
@@ -64,7 +65,7 @@ jobs:
             echo "AWS auth is configured for this run."
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::AWS_ROLE_TO_ASSUME is not available for pull request runs; skipping Terraform plan."
+            echo "::warning::AWS_ROLE_TO_ASSUME is not available for the dev environment for this pull request run; skipping Terraform plan."
           fi
 
       - uses: aws-actions/configure-aws-credentials@v4

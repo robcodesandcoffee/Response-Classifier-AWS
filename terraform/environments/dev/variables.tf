@@ -40,8 +40,8 @@ variable "training_instance_type" {
   default = "ml.m5.xlarge"
 }
 
-variable "sso_username" {
-  description = "IAM Identity Center username — must match exactly (check in IAM Identity Center → Users). SageMaker Studio user profile names allow only letters, numbers, and hyphens."
+variable "studio_user_name" {
+  description = "Studio user profile name for IAM-authenticated SageMaker Studio access. Use letters, numbers, and hyphens only."
   type        = string
 }
 

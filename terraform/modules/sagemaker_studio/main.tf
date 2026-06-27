@@ -66,7 +66,7 @@ resource "null_resource" "delete_sagemaker_apps" {
 
 resource "aws_sagemaker_domain" "studio" {
   domain_name = "${var.project}-${var.environment}-studio"
-  auth_mode   = "SSO"
+  auth_mode   = "IAM"
   vpc_id      = var.vpc_id
   subnet_ids  = var.subnet_ids
 
@@ -102,11 +102,11 @@ resource "aws_sagemaker_domain" "studio" {
 }
 
 # ---------------------------------------------------------------------------
-# Single user profile — linked to IAM Identity Center username
+# Single user profile — created for the IAM-authenticated Studio user
 # ---------------------------------------------------------------------------
 resource "aws_sagemaker_user_profile" "ml_engineer" {
   domain_id         = aws_sagemaker_domain.studio.id
-  user_profile_name = var.sso_username
+  user_profile_name = var.studio_user_name
 
   user_settings {
     execution_role  = var.execution_role_arn

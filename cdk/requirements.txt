@@ -1,0 +1,6 @@
+# CDK Python deps
+aws-cdk-lib>=2.120.0
+constructs>=10.3.0
+
+# Dev / test deps
+pytest>=8.0.0
